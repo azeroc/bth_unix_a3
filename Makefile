@@ -19,7 +19,7 @@ CFLAGS = -Wall
 all: calc3
 
 # I can't be bothered to make generalized solution for lexyacc stuff, so here is some simple hardcoded makefile logic for compiler building
-calc3: calc3a.exe calc3b.exe calc3g.exe
+calc3: calc3a.exe calc3b.exe calc3g.exe calc3i.exe
 
 calc3a.exe: lexyacc_dep
 	$(CC) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $(LEXYACC_SRCDIR)/calc3a.c -o $(BINDIR)/calc3a.exe
