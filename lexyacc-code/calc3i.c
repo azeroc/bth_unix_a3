@@ -4,30 +4,79 @@
 
 static int lbl;
 
+// Register usage: https://i.stack.imgur.com/WgcQv.png 
+// Get n-th scratch register for function argument usage
+// Supports up to 6 registers (index 0..5)
+const char* get_arg_register(int index)
+{
+    switch (index) {
+    case 0: // 1st arg
+        return "rdi";
+    case 1: // 2nd arg
+        return "rsi";
+    case 2: // 3rd arg
+        return "rdx";
+    case 3: // 4th arg
+        return "rcx";
+    case 4: // 5th arg
+        return "r8";
+    case 5: // 6th arg
+        return "r9";
+    default:
+        return "7th_arg_reg_doesnt_exist";
+    }
+}
+
+// generalized instruction (up to 6 arguments) set for function calls
+void instrSetFunction(int argc, const char* funcName) 
+{
+    /*  Function with 2 params example:
+        popq    %rsi            # Load 2st arg
+        popq    %rdi            # Load 1st arg
+        pushq   %rbp            # Save old call frame
+        movq    %rsp, %rbp      # Init new call frame
+        callq   myfunction      # Call myfunction
+        leave                   # Leave function call (restores old call frame)
+    */
+
+    // Make popq statements for loading arguments (in reverse due to stack's order)
+    for (int i = (argc - 1); i >= 0; i--) {
+        const char* arg_reg = get_arg_register(i);
+        printf("\tpopq\t%%%s\n", arg_reg);
+    }
+
+    // Preserve old and setup new call-frame
+    printf("\tpushq\t%%rbp\n");
+    printf("\tmovq %%rsp, %%rbp\t\n");
+
+    // Function call
+    printf("\tcallq\t%s\n", funcName);
+
+    // Leave op for restoring call frame
+    printf("\tleave\n");
+}
+
 // printf instruction set
 void instrSetPrint()
 {
     /*  EXAMPLE:
-        popq    %rax            # Load previously pushed arg into %rax
+        leaq    fmt(%rip), %rdi # 1st arg: printf's format string pointer fmt (fmt = "%d\n" in calc3_prologue.s)
+        popq    %rsi            # 2nd arg: previously pushed number
         pushq   %rbp            # Save old call frame
-        movq    %rsp, %rbp      # Init new call frame
-        leaq    fmt(%rip), %rdi # Set format arg
-        movq    %rax, %rsi      # Set 1st arg (%rsi) from %rax
+        movq    %rsp, %rbp      # Init new call frame        
         callq   printf@PLT      # Call printf (PLT address table)
         leave                   # Leave function call (restores old call frame)
     */
 
-    // Printf function boilerplate
-    printf("\tpopq\t%%rax\n");
+    printf("\tleaq\tfmt(%%rip), %%rdi\n");
+    printf("\tpopq\t%%rsi\n");
     printf("\tpushq\t%%rbp\n");
     printf("\tmovq\t%%rsp, %%rbp\n");
-    printf("\tleaq\tfmt(%%rip), %%rdi\n");
-    printf("\tmovq\t%%rax, %%rsi\n");
     printf("\tcallq\tprintf@PLT\n");
     printf("\tleave\n");
 }
 
-// 2-parameter arithmetic instruction set
+// binary-arithmetic instruction set
 void instrSetArithmetic(int oper)
 {
     /*  'SUB' / subtraction example:
@@ -38,7 +87,7 @@ void instrSetArithmetic(int oper)
         pushq   %rax        # Store result on stack (will be popq into symbol variable)
         <popq instr for storing %rax result in variable>
     */
-    // Common boilerplate starting part
+    // Load operands
     printf("\tpopq\t%%rdx\n");
     printf("\tpopq\t%%rax\n");
 
@@ -58,7 +107,7 @@ void instrSetArithmetic(int oper)
         break;
     }
 
-    // Common boilerplate ending part
+    // Store result
     printf("\tpushq\t%%rax\n");
 }
 
@@ -77,7 +126,6 @@ void instrSetComparison(int oper)
         <jz instr>          # We know that WHILE or IF-ELSE will append "jz" (jump if zero/equal) instruction after comparison instruction set
     */
 
-    // Common boilerplate starting part
     printf("\tpopq\t%%rdx\n");
     printf("\tpopq\t%%rax\n");
     printf("\tmovq\t$1, %%r8\n");
@@ -115,7 +163,6 @@ void instrSetComparison(int oper)
         break;
     }
     
-    // Common boilerplate ending part
     printf("\tcmpq\t%%r8, %%r9\n");
 }
 
@@ -161,33 +208,35 @@ int ex(nodeType *p) {
             ex(p->opr.op[0]);
             instrSetPrint();
             break;
-        case '=':       
+        case '=':
             ex(p->opr.op[1]);
             printf("\tpopq\t%c(%%rip)\n", p->opr.op[0]->id.i + 'a');
             break;
         case UMINUS:
             ex(p->opr.op[0]);
-            printf("\tneg\n");
+            printf("\tpopq\t%%rax\n");  // Pop argument for negation
+            printf("\tnegq\t%%rax\n");  // Negate argument value
+            printf("\tpushq\t%%rax\n"); // Push negated value
             break;
         case FACT:
             ex(p->opr.op[0]);
-            printf("\tfact\n");
+            instrSetFunction(1, "fact");
             break;
         case LNTWO:
             ex(p->opr.op[0]);
-            printf("\tlntwo\n");
+            instrSetFunction(1, "lntwo");
             break;
         default:
             ex(p->opr.op[0]);
             ex(p->opr.op[1]);
             switch(p->opr.oper) {
                 case GCD:   
-                    printf("\tgcd\n"); 
+                    instrSetFunction(2, "gcd");
                     break;
                 case '+':
                 case '-':
                 case '*':
-                case '/':   
+                case '/':
                     instrSetArithmetic(p->opr.oper); 
                     break;
                 case '<':
