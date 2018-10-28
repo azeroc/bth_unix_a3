@@ -1,7 +1,7 @@
 # FUNCTION LNTWO: Take one argument and return the binary logarithm of that argument.
 # For example: lntwo 32 = 5.
-    .section data
-    .section text
+    .section .data
+    .section .text
     .globl lntwo
     .type lntwo, @function
 # Arguments:

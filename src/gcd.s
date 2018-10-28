@@ -1,7 +1,7 @@
 # FUNCTION GCD: Take two arguments and return the greatest common divisor between the two arguments.
 # For example: 36 gcd 24 = 12.
-    .section data
-    .section text
+    .section .data
+    .section .text
     .globl gcd
     .type gcd, @function
 # Arguments:

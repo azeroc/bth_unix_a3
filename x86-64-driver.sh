@@ -14,8 +14,9 @@
 
 CALC_EXT=".calc"
 CALC_PATH="$1"
-GCC_FLAGS=""
-GCC_LIB_OPTS=""
+GCC_FLAGS="-Llib"
+GCC_EXTRA_FLAGS=""
+GCC_LIBS="-lfact -llntwo -lgcd"
 
 usage() 
 {
@@ -32,7 +33,7 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 shift
-GCC_FLAGS="$*"
+GCC_EXTRA_FLAGS="$*"
 
 # Check if parameter ends in .calc extension
 if [[ ${CALC_PATH: -5} != ".calc" ]]; then
@@ -55,7 +56,7 @@ bin/calc3i.exe < ${CALC_PATH} >> ${CALC_PROG_ASM}
 cat lexyacc-code/calc3_epilogue.s >> ${CALC_PROG_ASM}
 
 # Compile with GCC
-gcc ${GCC_FLAGS} ${GCC_LIB_OPTS} ${CALC_PROG_ASM} -o ${CALC_PROG}
+gcc ${GCC_FLAGS} ${GCC_EXTRA_FLAGS} ${CALC_PROG_ASM} ${GCC_LIBS} -o ${CALC_PROG}
 
 # Check if build succeeded
 if [[ $? -ne 0 ]]; then
