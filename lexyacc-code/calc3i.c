@@ -86,34 +86,40 @@ void instrSetArithmetic(int oper)
 {
     /*  'SUB' / subtraction example:
         <2 pushq instrs for preparing 2 parameters for arithmetic op>
-        popq    %rdx        # Get <2nd operand>
-        popq    %rax        # Get <1st operand>
+        popq    %rsi        # Get <2nd operand>
+        popq    %rdi        # Get <1st operand>
         subq    %rdx, %rax  # <1st operand> minus <2nd operand>, result stored in %rax
         pushq   %rax        # Store result on stack (will be popq into symbol variable)
         <popq instr for storing %rax result in variable>
     */
     // Load operands
-    printf("\tpopq\t%%rdx\n");
-    printf("\tpopq\t%%rax\n");
+    printf("\tpopq\t%%rsi\n");
+    printf("\tpopq\t%%rdi\n");
 
     // Main arithmetic op part
     switch (oper) {
     case '+': // Addition
-        printf("\taddq\t%%rdx, %%rax\n"); 
+        printf("\taddq\t%%rsi, %%rdi\n"); 
         break;
     case '-': // Subtraction
-        printf("\tsubq\t%%rdx, %%rax\n"); 
+        printf("\tsubq\t%%rsi, %%rdi\n"); 
         break; 
     case '*': // Multiplication (I am assuming signed multiplication - imulq)
-        printf("\timulq\t%%rdx, %%rax\n"); 
+        printf("\timulq\t%%rsi, %%rdi\n"); 
         break;
     case '/': // Division (I am assuming signed division - idivq)
-        printf("\tidivq\t%%rdx, %%rax\n"); 
+        // This gets bit more complicated since division operator uses temp registers for additional stuff like quotient and remainder
+        // See more: https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf (page #4)
+        printf("\tmovq\t%%rdi, %%rax\n"); // Store dividend value in RAX from RDI (1st arg)
+        printf("\txorq\t%%rdx, %%rdx\n"); // Zero out RDX due to RDX:RAX dividend structure for div instruction
+                                          // Otherwise we get Floating point exceptions (because RDX is dirty and not zeroed out)
+        printf("\tidivq\t%%rsi\n");       // RDI div by RSI, after division: RDX = remainder, RAX = quotient
+        printf("\tmovq\t%%rax, %%rdi\n"); // Store RAX (quotient) as result in RDI
         break;
     }
 
-    // Store result
-    printf("\tpushq\t%%rax\n");
+    // Store/push result from RDI
+    printf("\tpushq\t%%rdi\n");
 }
 
 // comparison instruction set
