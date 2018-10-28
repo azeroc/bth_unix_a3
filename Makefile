@@ -50,5 +50,6 @@ lexyacc_dep:
 # Non-file targets (.PHONY)
 .PHONY: clean
 clean:
+	rm -f -v $(LIBDIR)/*
 	rm -f -v $(BUILD_DIR)/*
-	rm -rf -v $(BINDIR)/*
+	rm -f -v $(BINDIR)/*
