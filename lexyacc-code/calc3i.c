@@ -28,7 +28,7 @@ const char* get_arg_register(int index)
 }
 
 // generalized instruction (up to 6 arguments) set for function calls
-void instrSetFunction(int argc, const char* funcName) 
+void instrSetFunction(int argc, const char* funcName, int hasReturnValue) 
 {
     /*  Function with 2 params example:
         popq    %rsi            # Load 2st arg
@@ -47,13 +47,18 @@ void instrSetFunction(int argc, const char* funcName)
 
     // Preserve old and setup new call-frame
     printf("\tpushq\t%%rbp\n");
-    printf("\tmovq %%rsp, %%rbp\t\n");
+    printf("\tmovq\t%%rsp, %%rbp\t\n");
 
     // Function call
-    printf("\tcallq\t%s\n", funcName);
+    printf("\tcall\t%s\n", funcName);
 
     // Leave op for restoring call frame
     printf("\tleave\n");
+
+    // Push return value if function makes it
+    if (hasReturnValue == 1) {
+        printf("\tpushq\t%%rax\n");
+    }
 }
 
 // printf instruction set
@@ -72,7 +77,7 @@ void instrSetPrint()
     printf("\tpopq\t%%rsi\n");
     printf("\tpushq\t%%rbp\n");
     printf("\tmovq\t%%rsp, %%rbp\n");
-    printf("\tcallq\tprintf@PLT\n");
+    printf("\tcall\tprintf@PLT\n");
     printf("\tleave\n");
 }
 
@@ -220,18 +225,18 @@ int ex(nodeType *p) {
             break;
         case FACT:
             ex(p->opr.op[0]);
-            instrSetFunction(1, "fact");
+            instrSetFunction(1, "fact", 1);
             break;
         case LNTWO:
             ex(p->opr.op[0]);
-            instrSetFunction(1, "lntwo");
+            instrSetFunction(1, "lntwo", 1);
             break;
         default:
             ex(p->opr.op[0]);
             ex(p->opr.op[1]);
             switch(p->opr.oper) {
                 case GCD:   
-                    instrSetFunction(2, "gcd");
+                    instrSetFunction(2, "gcd", 1);
                     break;
                 case '+':
                 case '-':
