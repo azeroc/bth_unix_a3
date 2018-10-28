@@ -13,7 +13,7 @@ BINDIR = bin
 
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 ARFLAGS = rcs
 
 # == == == Makefile logic == == ==
@@ -23,7 +23,7 @@ all: calc3 calc3libs test
 
 calc3: $(BINDIR)/calc3a.exe $(BINDIR)/calc3b.exe $(BINDIR)/calc3g.exe $(BINDIR)/calc3i.exe
 
-calc3libs: $(LIBDIR)/libfact.a $(LIBDIR)/libgcd.a $(LIBDIR)/liblntwo.a
+calc3libs: $(LIBDIR)/libfact.a $(LIBDIR)/libgcd.a $(LIBDIR)/liblntwo.a $(LIBDIR)/libmyprint.a
 
 test: $(BUILD_DIR)/test.o
 	$(CC) $(CFLAGS) $(BUILD_DIR)/test.o -o $(BINDIR)/test

@@ -16,7 +16,7 @@ CALC_EXT=".calc"
 CALC_PATH="$1"
 GCC_FLAGS="-Llib"
 GCC_EXTRA_FLAGS=""
-GCC_LIBS="-lfact -llntwo -lgcd"
+GCC_LIBS="-lfact -llntwo -lgcd -lmyprint"
 
 usage() 
 {

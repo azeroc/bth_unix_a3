@@ -217,7 +217,8 @@ int ex(nodeType *p) {
             break;
         case PRINT:     
             ex(p->opr.op[0]);
-            instrSetPrint();
+            //instrSetPrint();
+            instrSetFunction(1, "myprint", 0);
             break;
         case '=':
             ex(p->opr.op[1]);
