@@ -3,41 +3,49 @@
 BISON = bison
 FLEX = flex
 CC = gcc
+AR = ar
 
 LEXYACC_SRCDIR = lexyacc-code
 SRCDIR = src
 BUILD_DIR = build
+LIBDIR = lib
 BINDIR = bin
 
 SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 CFLAGS = -Wall
+ARFLAGS = rcs
 
 # == == == Makefile logic == == ==
 
 # Default make target
-all: calc3
+all: calc3 calc3libs test
 
-# I can't be bothered to make generalized solution for lexyacc stuff, so here is some simple hardcoded makefile logic for compiler building
-calc3: calc3a.exe calc3b.exe calc3g.exe calc3i.exe
+calc3: $(BINDIR)/calc3a.exe $(BINDIR)/calc3b.exe $(BINDIR)/calc3g.exe $(BINDIR)/calc3i.exe
 
-calc3a.exe: lexyacc_dep
-	$(CC) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $(LEXYACC_SRCDIR)/calc3a.c -o $(BINDIR)/calc3a.exe
+calc3libs: $(LIBDIR)/libfact.a $(LIBDIR)/libgcd.a $(LIBDIR)/liblntwo.a
 
-calc3b.exe: lexyacc_dep
-	$(CC) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $(LEXYACC_SRCDIR)/calc3b.c -o $(BINDIR)/calc3b.exe
+test: $(BUILD_DIR)/test.o
+	$(CC) $(CFLAGS) $(BUILD_DIR)/test.o -o $(BINDIR)/test
 
-calc3g.exe: lexyacc_dep
-	$(CC) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $(LEXYACC_SRCDIR)/calc3g.c -o $(BINDIR)/calc3g.exe
+# Generalized calc3 .exe compiling from calc3 prog's .c file and lexyacc_dep dependencies
+$(BINDIR)/%.exe: $(LEXYACC_SRCDIR)/%.c lexyacc_dep
+	$(CC) $(CFLAGS) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $< -o $@
 
-calc3i.exe: lexyacc_dep
-	$(CC) -I$(BUILD_DIR) $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/lex.yy.o $(LEXYACC_SRCDIR)/calc3i.c -o $(BINDIR)/calc3i.exe
+# Generalized .a library compiling from .o objects
+$(LIBDIR)/lib%.a: $(BUILD_DIR)/%.o
+	$(AR) $(ARFLAGS) $@ $<
 
+# Generalized .o file compiling .s from src dir
+$(BUILD_DIR)/%.o: $(SRCDIR)/%.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Bunch of manual compile commands for compiling lexyacc dependencies with 'bison' and 'flex' commands
 lexyacc_dep:	
 	bison -y -d $(LEXYACC_SRCDIR)/calc3.y -o $(BUILD_DIR)/y.tab.c
 	$(FLEX) -o $(BUILD_DIR)/lex.yy.c $(LEXYACC_SRCDIR)/calc3.l 
-	gcc -I$(LEXYACC_SRCDIR) -c $(BUILD_DIR)/y.tab.c -o $(BUILD_DIR)/y.tab.o
-	gcc -I$(LEXYACC_SRCDIR) -c $(BUILD_DIR)/lex.yy.c -o $(BUILD_DIR)/lex.yy.o
+	$(CC) $(CFLAGS) -I$(LEXYACC_SRCDIR) -c $(BUILD_DIR)/y.tab.c -o $(BUILD_DIR)/y.tab.o
+	$(CC) $(CFLAGS) -I$(LEXYACC_SRCDIR) -c $(BUILD_DIR)/lex.yy.c -o $(BUILD_DIR)/lex.yy.o
 
 # Non-file targets (.PHONY)
 .PHONY: clean
